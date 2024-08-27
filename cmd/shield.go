@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httputil"
 	"nginy/cmd/shield"
@@ -9,6 +10,13 @@ import (
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 )
+
+func ErrorHandler() func(http.ResponseWriter, *http.Request, error) {
+	return func(w http.ResponseWriter, req *http.Request, err error) {
+		fmt.Printf("Got error while modifying response: %v \n", err)
+		return
+	}
+}
 
 var shieldcmd = &cobra.Command{
 	Use:   "shield",
@@ -34,7 +42,12 @@ var shieldcmd = &cobra.Command{
 			panic(err)
 		}
 
-		director := shield.NewDirector("http://localhost:1234")
+		origin, err := cmd.Flags().GetString("origin-host")
+		if err != nil {
+			return err
+		}
+
+		director := shield.NewDirector(origin)
 		response := shield.NewResponse()
 
 		mux := http.NewServeMux()
@@ -48,9 +61,12 @@ var shieldcmd = &cobra.Command{
 			proxy.ServeHTTP(w, r)
 		})
 
+		// TODO: support multiple middleware
+		mw := shield.NewCacheMiddleware()
+
 		s := &http.Server{
 			Addr:           ":9000",
-			Handler:        CacheMiddleware(mux),
+			Handler:        mw.Next(mux),
 			ReadTimeout:    10 * time.Second,
 			WriteTimeout:   10 * time.Second,
 			MaxHeaderBytes: 1 << 20,
@@ -63,5 +79,6 @@ var shieldcmd = &cobra.Command{
 func init() {
 	cobra.OnInitialize(initConfig)
 	shieldcmd.Flags().Bool("debug-mode", false, "debug mode")
+	shieldcmd.Flags().String("origin-host", "http://localhost:3030", "origin host")
 	rootCmd.AddCommand(shieldcmd)
 }
