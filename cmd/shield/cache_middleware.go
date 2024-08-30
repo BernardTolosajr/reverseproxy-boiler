@@ -28,7 +28,7 @@ func NewCacheMiddleware(exporter metric.Reader) *CacheMiddleware {
 
 	histogram, err := meter.Float64Histogram(
 		"duration",
-		api.WithDescription("a shieldbuckets"),
+		api.WithDescription("a shield buckets"),
 		api.WithExplicitBucketBoundaries(64, 128, 256, 512, 1024, 2048, 4096),
 	)
 
