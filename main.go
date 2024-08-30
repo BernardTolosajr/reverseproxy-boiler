@@ -1,7 +1,7 @@
 package main
 
 import (
-	"nginy/cmd"
+	"shield/cmd"
 )
 
 func main() {

@@ -4,11 +4,14 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httputil"
-	"nginy/cmd/shield"
+	"shield/cmd/shield"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
+
+	"go.opentelemetry.io/otel/exporters/prometheus"
 )
 
 func ErrorHandler() func(http.ResponseWriter, *http.Request, error) {
@@ -50,6 +53,11 @@ var shieldcmd = &cobra.Command{
 		director := shield.NewDirector(origin)
 		response := shield.NewResponse()
 
+		exporter, err := prometheus.New()
+		if err != nil {
+			return err
+		}
+
 		mux := http.NewServeMux()
 		proxy := &httputil.ReverseProxy{
 			Director:       director.Request(),
@@ -61,9 +69,11 @@ var shieldcmd = &cobra.Command{
 			proxy.ServeHTTP(w, r)
 		})
 
-		// TODO: support multiple middleware
-		mw := shield.NewCacheMiddleware()
+		mux.Handle("/metrics", promhttp.Handler())
 
+		mw := shield.NewCacheMiddleware(exporter)
+
+		// TODO: support multiple middleware
 		s := &http.Server{
 			Addr:           ":9000",
 			Handler:        mw.Next(mux),
