@@ -19,16 +19,16 @@ type CacheMiddleware struct {
 
 func NewCacheMiddleware(exporter metric.Reader) *CacheMiddleware {
 	provider := metric.NewMeterProvider(metric.WithReader(exporter))
-	meter := provider.Meter("reader")
+	meter := provider.Meter("shield")
 
-	counter, err := meter.Float64Counter("counter", api.WithDescription("counter succes counter"))
+	counter, err := meter.Float64Counter("counter", api.WithDescription("counter succes rate"))
 	if err != nil {
 		panic(err)
 	}
 
 	histogram, err := meter.Float64Histogram(
 		"duration",
-		api.WithDescription("a histogram with custom buckets and rename"),
+		api.WithDescription("a shieldbuckets"),
 		api.WithExplicitBucketBoundaries(64, 128, 256, 512, 1024, 2048, 4096),
 	)
 
@@ -48,7 +48,7 @@ func (c *CacheMiddleware) Next(next http.Handler) http.Handler {
 		w.Header()
 
 		opt := api.WithAttributes(
-			attribute.Key("counter").String("success"),
+			attribute.Key("reader").String("success"),
 		)
 
 		// TODO: count success rate
