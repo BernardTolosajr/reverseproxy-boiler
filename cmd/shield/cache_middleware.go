@@ -13,8 +13,8 @@ import (
 )
 
 type CacheMiddleware struct {
-	counter   api.Float64Counter
-	histogram api.Float64Histogram
+	api.Float64Counter
+	api.Float64Histogram
 }
 
 func NewCacheMiddleware(exporter metric.Reader) *CacheMiddleware {
@@ -52,10 +52,10 @@ func (c *CacheMiddleware) Next(next http.Handler) http.Handler {
 		)
 
 		// TODO: count success rate
-		c.counter.Add(context.Background(), 1, opt)
+		c.Add(context.Background(), 1, opt)
 
 		// TODO: record duration
-		c.histogram.Record(context.Background(), 136, opt)
+		c.Record(context.Background(), 136, opt)
 
 		//TODO: add read cache logic
 		_, err := json.Marshal(map[string]string{"hello": "world"})
