@@ -70,11 +70,9 @@ var shieldcmd = &cobra.Command{
 		mux.Handle("/metrics", promhttp.Handler())
 
 		var handler http.Handler
-
-		mw := shield.NewCacheMiddleware(exporter)
-
 		// transparent mode
 		if !tm {
+			mw := shield.NewCacheMiddleware(exporter)
 			handler = mw.Next(mux)
 		} else {
 			handler = mux
