@@ -29,7 +29,6 @@ func (d *Director) Request() func(req *http.Request) {
 		req.URL.Host = remote.Host
 
 		path := fmt.Sprintf("%s/%s", remote.Path, strings.TrimLeft(req.URL.Path, "/"))
-		fmt.Printf("path: %s", path)
 
 		req.URL.Path = path
 	}
