@@ -52,9 +52,10 @@ func (c *CacheMiddleware) Next(next http.Handler) http.Handler {
 		w.Header()
 
 		if c.db != nil {
+			fmt.Printf("boom")
 			c.db.View(func(tx *bolt.Tx) error {
 				b := tx.Bucket([]byte("Whitelist"))
-				v := b.Get([]byte("msisdn:" + "foo"))
+				v := b.Get([]byte("name:" + "foo"))
 				if v != nil {
 					fmt.Printf("belongs to white listing: %s\n", v)
 					// Skip logic!!
