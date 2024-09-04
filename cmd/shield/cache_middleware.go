@@ -53,7 +53,6 @@ func (c *CacheMiddleware) Next(next http.Handler) http.Handler {
 
 		// TODO: implement this logic also in the modify response
 		if c.db != nil {
-			fmt.Printf("boom")
 			c.db.View(func(tx *bolt.Tx) error {
 				b := tx.Bucket([]byte("Whitelist"))
 				// FIXME: refactor this base on whitelisting rule
