@@ -12,7 +12,7 @@ var cfgFile string
 
 var rootCmd = &cobra.Command{
 	Use:   "shield",
-	Short: "shield todo",
+	Short: "shield",
 	Long: `A Fast and cache layer with
                 love by btx and friends`,
 }
@@ -26,6 +26,7 @@ func Execute() {
 
 func initConfig() {
 	viper.SetConfigFile(cfgFile)
+	viper.SetConfigType("yaml")
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
 		fmt.Println("Using config file:", viper.ConfigFileUsed())
@@ -33,5 +34,5 @@ func initConfig() {
 }
 
 func init() {
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.sample.yaml)")
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.example.yaml)")
 }

@@ -5,12 +5,15 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"shield/cmd/shield"
+	"strings"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"go.uber.org/zap"
 
+	bolt "go.etcd.io/bbolt"
 	"go.opentelemetry.io/otel/exporters/prometheus"
 )
 
@@ -35,6 +38,9 @@ var shieldcmd = &cobra.Command{
 
 		// TODO: fix this!
 		logger, err = zap.NewDevelopment()
+
+		whitelist := viper.Get("whitelist")
+
 		if err != nil {
 			return err
 		}
@@ -72,8 +78,41 @@ var shieldcmd = &cobra.Command{
 		var handler http.Handler
 		// transparent mode
 		if !tm {
-			mw := shield.NewCacheMiddleware(exporter)
-			handler = mw.Next(mux)
+			// hydrate whitelisting config
+			if whitelist != nil {
+				whitelists := strings.Split(whitelist.(string), ",")
+				logger.Debug("hydrating config..", zap.Any("payload", whitelists))
+				db, err := bolt.Open("config.db", 0600, nil)
+				if err != nil {
+					logger.Error("storage", zap.Error(err))
+					return err
+				}
+				defer db.Close()
+				err = db.Update(func(tx *bolt.Tx) error {
+					b, err := tx.CreateBucket([]byte("Whitelist"))
+					if err != nil {
+						return fmt.Errorf("create bucket: %s", err)
+					}
+					for _, v := range whitelists {
+						key := fmt.Sprintf("name:%s", v)
+						logger.Debug("whitelist", zap.Any("key", key))
+						if err := b.Put([]byte(key), []byte(v)); err != nil {
+							logger.Error("store", zap.Error(err))
+							continue
+						}
+					}
+					return nil
+				})
+				if err != nil {
+					logger.Error("storage", zap.Error(err))
+				}
+
+				logger.Info("using cache middleware..")
+
+				mw := shield.NewCacheMiddleware(exporter, db)
+				handler = mw.Next(mux)
+			}
+
 		} else {
 			handler = mux
 		}
@@ -103,6 +142,7 @@ func createProxy(origin string, transparentMode bool) *httputil.ReverseProxy {
 		}
 	}
 
+	fmt.Println("running on transfarent mode..")
 	return &httputil.ReverseProxy{
 		Director:     director.Request(),
 		ErrorHandler: ErrorHandler(),
@@ -112,7 +152,7 @@ func createProxy(origin string, transparentMode bool) *httputil.ReverseProxy {
 func init() {
 	cobra.OnInitialize(initConfig)
 	shieldcmd.Flags().Bool("debug-mode", false, "debug mode")
-	shieldcmd.Flags().String("origin-host", "http://localhost:3030", "origin host")
+	shieldcmd.Flags().String("origin-host", "localhost:3030/hello", "origin host")
 	shieldcmd.Flags().Bool("transparent-mode", false, "transparent mode")
 	rootCmd.AddCommand(shieldcmd)
 }

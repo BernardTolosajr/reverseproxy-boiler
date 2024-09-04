@@ -18,6 +18,8 @@ func NewResponse() *Response {
 
 func (r *Response) Modify() func(*http.Response) error {
 	return func(r *http.Response) error {
+		fmt.Printf("modifyin...")
+
 		var body map[string]interface{}
 
 		err := json.NewDecoder(r.Body).Decode(&body)

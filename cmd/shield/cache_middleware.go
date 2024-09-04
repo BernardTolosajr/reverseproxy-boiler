@@ -10,14 +10,17 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	api "go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/sdk/metric"
+
+	bolt "go.etcd.io/bbolt"
 )
 
 type CacheMiddleware struct {
 	api.Float64Counter
 	api.Float64Histogram
+	db *bolt.DB
 }
 
-func NewCacheMiddleware(exporter metric.Reader) *CacheMiddleware {
+func NewCacheMiddleware(exporter metric.Reader, db *bolt.DB) *CacheMiddleware {
 	provider := metric.NewMeterProvider(metric.WithReader(exporter))
 	meter := provider.Meter("shield")
 
@@ -39,6 +42,7 @@ func NewCacheMiddleware(exporter metric.Reader) *CacheMiddleware {
 	return &CacheMiddleware{
 		counter,
 		histogram,
+		db,
 	}
 }
 
@@ -46,6 +50,18 @@ func (c *CacheMiddleware) Next(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 		w.Header()
+
+		if c.db != nil {
+			c.db.View(func(tx *bolt.Tx) error {
+				b := tx.Bucket([]byte("Whitelist"))
+				v := b.Get([]byte("msisdn:" + "foo"))
+				if v != nil {
+					fmt.Printf("belongs to white listing: %s\n", v)
+					// Skip logic!!
+				}
+				return nil
+			})
+		}
 
 		opt := api.WithAttributes(
 			attribute.Key("reader").String("success"),
