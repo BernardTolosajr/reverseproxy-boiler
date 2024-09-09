@@ -23,8 +23,6 @@ func TestWithPayload(t *testing.T) {
 	}
 	defer db.Close()
 
-	p := NewProvider(db)
-
 	err = db.Update(func(tx *bolt.Tx) error {
 		b, err := tx.CreateBucketIfNotExists([]byte("whitelist"))
 		if err != nil {
@@ -39,6 +37,8 @@ func TestWithPayload(t *testing.T) {
 		}
 		return nil
 	})
+
+	p := NewProvider(db)
 
 	evalCtx := map[string]interface{}{
 		"key":    "name:",
