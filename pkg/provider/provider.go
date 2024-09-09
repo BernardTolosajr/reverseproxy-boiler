@@ -40,10 +40,8 @@ func (i *WhitelistProvider) BooleanEvaluation(ctx context.Context,
 	flag string, defaultValue bool,
 	evalCtx openfeature.FlattenedContext,
 ) openfeature.BoolResolutionDetail {
-
 	res := i.resolveFlag(flag, defaultValue, evalCtx)
 	v, ok := res.Value.(bool)
-
 	if !ok {
 		return openfeature.BoolResolutionDetail{
 			Value: defaultValue,
@@ -53,7 +51,6 @@ func (i *WhitelistProvider) BooleanEvaluation(ctx context.Context,
 			},
 		}
 	}
-
 	return openfeature.BoolResolutionDetail{
 		Value:                    v,
 		ProviderResolutionDetail: res.ProviderResolutionDetail,
