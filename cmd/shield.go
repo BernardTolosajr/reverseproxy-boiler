@@ -14,6 +14,8 @@ import (
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 
+	provider "shield/pkg/provider"
+
 	bolt "go.etcd.io/bbolt"
 	"go.opentelemetry.io/otel/exporters/prometheus"
 )
@@ -76,9 +78,6 @@ var shieldcmd = &cobra.Command{
 
 		mux.Handle("/metrics", promhttp.Handler())
 
-		openfeature.SetProvider(openfeature.NoopProvider{})
-		//client := openfeature.NewClient("shield-client")
-
 		var handler http.Handler
 		// transparent mode
 		if !tm {
@@ -113,7 +112,10 @@ var shieldcmd = &cobra.Command{
 
 				logger.Info("using cache middleware..")
 
-				mw := shield.NewCacheMiddleware(exporter, db)
+				openfeature.SetProvider(provider.NewProvider(db))
+				client := openfeature.NewClient("shield-client")
+
+				mw := shield.NewCacheMiddleware(exporter, client)
 				handler = mw.Next(mux)
 			}
 
