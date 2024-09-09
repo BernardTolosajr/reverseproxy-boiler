@@ -51,7 +51,7 @@ func (c *CacheMiddleware) Next(next http.Handler) http.Handler {
 		w.Header()
 
 		res, err := c.feature.BooleanValueDetails(context.Background(),
-			"whitelist",
+			"whitelist", // this is the name of the bucket
 			false,
 			openfeature.NewEvaluationContext(
 				"<replace this msisdn here or any key>",
