@@ -132,6 +132,8 @@ var shieldcmd = &cobra.Command{
 			MaxHeaderBytes: 1 << 20,
 		}
 
+		// TODO: added gracefull shutdown
+
 		return s.ListenAndServe()
 	},
 }
