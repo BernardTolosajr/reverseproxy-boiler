@@ -41,8 +41,8 @@ func TestWithPayload(t *testing.T) {
 	p := NewProvider(db)
 
 	evalCtx := map[string]interface{}{
-		"key":    "name:",
-		"msisdn": "foo",
+		"key":          "name:",
+		"targetingKey": "foo",
 	}
 
 	res := p.BooleanEvaluation(context.Background(), "whitelist", false, evalCtx)

@@ -51,12 +51,12 @@ func (c *CacheMiddleware) Next(next http.Handler) http.Handler {
 		w.Header()
 
 		res, err := c.feature.BooleanValueDetails(context.Background(),
-			"whitelist", false,
+			"whitelist",
+			false,
 			openfeature.NewEvaluationContext(
-				"",
+				"<replace this msisdn here or any key>",
 				map[string]interface{}{
-					"key":    "name:",
-					"msisdn": "replace this msisdn here or any key",
+					"key": "name:", // this is the key in the bucket
 				},
 			),
 		)
@@ -81,7 +81,7 @@ func (c *CacheMiddleware) Next(next http.Handler) http.Handler {
 		c.Record(context.Background(), 136, opt)
 
 		//TODO: add read cache logic
-		_, err := json.Marshal(map[string]string{"hello": "world"})
+		_, err = json.Marshal(map[string]string{"hello": "world"})
 		if err != nil {
 			panic(err)
 		}

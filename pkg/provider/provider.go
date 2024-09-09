@@ -102,17 +102,23 @@ func (i *WhitelistProvider) resolveFlag(flagKey string,
 ) openfeature.InterfaceResolutionDetail {
 	var value bool
 
+	user := evalCtx["targetingKey"]
+	if user == nil {
+		return openfeature.InterfaceResolutionDetail{
+			Value: defaultValue,
+			ProviderResolutionDetail: openfeature.ProviderResolutionDetail{
+				Reason: openfeature.Reason(openfeature.TargetingKeyMissingCode),
+			},
+		}
+	}
+
 	e := i.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(flagKey))
 		key := evalCtx["key"]
 		if key == nil {
 			return fmt.Errorf("key not found")
 		}
-		msisdn := evalCtx["msisdn"]
-		if msisdn == nil {
-			return fmt.Errorf("msisdn not found")
-		}
-		v := b.Get([]byte(fmt.Sprintf("%s%s", key.(string), msisdn.(string))))
+		v := b.Get([]byte(fmt.Sprintf("%s%s", key.(string), user.(string))))
 		if v != nil {
 			value = true
 		} else {
