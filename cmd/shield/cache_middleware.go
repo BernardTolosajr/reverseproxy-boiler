@@ -11,8 +11,6 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	api "go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/sdk/metric"
-
-	bolt "go.etcd.io/bbolt"
 )
 
 type CacheMiddleware struct {
