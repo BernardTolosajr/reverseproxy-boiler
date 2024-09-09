@@ -92,7 +92,7 @@ var shieldcmd = &cobra.Command{
 				}
 				defer db.Close()
 				err = db.Update(func(tx *bolt.Tx) error {
-					b, err := tx.CreateBucket([]byte("Whitelist"))
+					b, err := tx.CreateBucket([]byte("whitelist"))
 					if err != nil {
 						return fmt.Errorf("create bucket: %s", err)
 					}
