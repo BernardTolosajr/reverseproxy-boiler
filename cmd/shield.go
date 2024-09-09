@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -74,6 +75,9 @@ var shieldcmd = &cobra.Command{
 		})
 
 		mux.Handle("/metrics", promhttp.Handler())
+
+		openfeature.SetProvider(openfeature.NoopProvider{})
+		//client := openfeature.NewClient("shield-client")
 
 		var handler http.Handler
 		// transparent mode

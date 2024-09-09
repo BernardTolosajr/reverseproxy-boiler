@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/open-feature/go-sdk/openfeature"
 	"go.opentelemetry.io/otel/attribute"
 	api "go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/sdk/metric"
@@ -17,10 +18,10 @@ import (
 type CacheMiddleware struct {
 	api.Float64Counter
 	api.Float64Histogram
-	db *bolt.DB
+	feature *openfeature.Client
 }
 
-func NewCacheMiddleware(exporter metric.Reader, db *bolt.DB) *CacheMiddleware {
+func NewCacheMiddleware(exporter metric.Reader, feature *openfeature.Client) *CacheMiddleware {
 	provider := metric.NewMeterProvider(metric.WithReader(exporter))
 	meter := provider.Meter("shield")
 
@@ -42,7 +43,7 @@ func NewCacheMiddleware(exporter metric.Reader, db *bolt.DB) *CacheMiddleware {
 	return &CacheMiddleware{
 		counter,
 		histogram,
-		db,
+		feature,
 	}
 }
 
@@ -51,18 +52,24 @@ func (c *CacheMiddleware) Next(next http.Handler) http.Handler {
 		start := time.Now()
 		w.Header()
 
-		// TODO: implement this logic also in the modify response
-		if c.db != nil {
-			c.db.View(func(tx *bolt.Tx) error {
-				b := tx.Bucket([]byte("Whitelist"))
-				// FIXME: refactor this base on whitelisting rule
-				v := b.Get([]byte("name:" + "foo"))
-				if v != nil {
-					fmt.Printf("belongs to white listing: %s\n", v)
-					// TODO: this means we are skiping this middleware
-				}
-				return nil
-			})
+		res, err := c.feature.BooleanValueDetails(context.Background(),
+			"whitelist", false,
+			openfeature.NewEvaluationContext(
+				"",
+				map[string]interface{}{
+					"key":    "name:",
+					"msisdn": "replace this msisdn here or any key",
+				},
+			),
+		)
+
+		if err != nil {
+			// TODO: log error using zap
+			fmt.Errorf("%v", err)
+		}
+
+		if res.Value {
+			// meaning we found payload in the whitelist, skip your logic!
 		}
 
 		opt := api.WithAttributes(
